@@ -1,9 +1,19 @@
 import asyncio
-from quart import Quart, jsonify, request
+from quart import Quart, jsonify, request, render_template
 from app.viewmodels.gift_bot import GiftBotViewModel
 from app.core.logger import logger
 
-app = Quart(__name__)
+app = Quart(__name__, template_folder='app/templates')
+
+# ... startup/shutdown ...
+
+@app.route("/")
+async def index():
+    return await render_template("index.html")
+
+@app.route("/status")
+async def status():
+    return jsonify({"status": "running", "service": "Superlive Gift Bot", "workers_active": len(vm.workers)})
 
 # Global ViewModel instance (simplified for this use case)
 # In a real app, we might instanitiate per request or use collection
@@ -66,9 +76,6 @@ async def auto_gift_control():
 
     return jsonify({"status": "error", "message": "Invalid code"}), 400
 
-@app.route("/")
-async def index():
-    return jsonify({"status": "running", "service": "Superlive Gift Bot", "workers_active": len(vm.workers)})
 
 if __name__ == "__main__":
     import hypercorn.asyncio
