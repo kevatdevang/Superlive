@@ -1,0 +1,6 @@
+quart
+hypercorn
+httpx
+beautifulsoup4
+inputimeout
+colorama

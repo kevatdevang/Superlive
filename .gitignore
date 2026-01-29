@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.env
+
+# Logs
+*.log
+superlive_bot/data/*.log
+
+# Data & Config
+superlive_bot/data/accounts.txt
+superlive_bot/data/gift_analytics.json
+
+# IDE
+.vscode/
+.idea/

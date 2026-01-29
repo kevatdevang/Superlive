@@ -1,0 +1,2 @@
+class SignupLimitError(Exception):
+    pass
