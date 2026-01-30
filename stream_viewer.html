@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Superlive Stream Viewer</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1a1a1a; color: #fff; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .container { width: 90%; max-width: 1200px; display: flex; gap: 20px; }
+        .controls { flex: 1; background: #2a2a2a; padding: 20px; border-radius: 8px; }
+        .player { flex: 2; background: #000; height: 600px; border-radius: 8px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        textarea { width: 100%; height: 200px; background: #333; color: #fff; border: 1px solid #444; padding: 10px; font-family: monospace; border-radius: 4px; }
+        input { width: 100%; padding: 10px; margin-bottom: 10px; background: #333; color: #fff; border: 1px solid #444; border-radius: 4px; }
+        button { width: 100%; padding: 12px; background: #e91e63; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        button:hover { background: #d81b60; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #aaa; }
+        #stream-status { margin-top: 10px; color: #aaa; font-size: 0.9em; }
+        .status-connected { color: #4caf50 !important; }
+        .status-error { color: #f44336 !important; }
+    </style>
+    <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.18.2.js"></script>
+</head>
+<body>
+    <h1>Superlive Stream Viewer</h1>
+    
+    <div class="container">
+        <div class="controls">
+            <h3>1. Configuration</h3>
+            
+            <label for="app-id">Agora App ID (Required)</label>
+            <input type="text" id="app-id" placeholder="Paste Agora App ID here" value="466f7443143a3df42868339f73e53887">
+            <small style="color: #ed84a4; display: block; margin-bottom: 15px;">
+                Note: I tried to auto-fill a potential App ID found in traces (from `api/viewmodel.py` adjust data or similar). If it fails, please find the correct App ID.
+            </small>
+
+            <label for="json-input">Paste 'stream_details' JSON here</label>
+            <textarea id="json-input" placeholder='{"stream_details": { ... }}'></textarea>
+            
+            <button onclick="parseAndJoin()">Play Stream</button>
+
+            <div id="manual-controls" style="margin-top: 20px; border-top: 1px solid #444; padding-top: 20px; display: none;">
+                <h4>Debug / Manual Info</h4>
+                <label>Channel</label> <input type="text" id="channel" readonly>
+                <label>Token</label> <input type="text" id="token" readonly>
+                <label>UID</label> <input type="text" id="uid" readonly>
+            </div>
+            
+            <div id="stream-status">Ready</div>
+        </div>
+        
+        <div class="player" id="remote-player">
+            <div id="placeholder-text">Stream Video Will Appear Here</div>
+        </div>
+    </div>
+
+    <script>
+        // Init Agora Client
+        var client = AgoraRTC.createClient({ mode: "live", codec: "h264" });
+        var localTracks = { videoTrack: null, audioTrack: null };
+        var remoteUsers = {};
+
+        async function parseAndJoin() {
+            const jsonStr = document.getElementById("json-input").value;
+            const appId = document.getElementById("app-id").value;
+            const statusEl = document.getElementById("stream-status");
+            
+            if (!appId) {
+                alert("Please enter Agora App ID");
+                return;
+            }
+
+            try {
+                // Parse JSON
+                let data;
+                try {
+                    data = JSON.parse(jsonStr);
+                    // Handle if user pasted normally wrapped json or just the stream_details block
+                    if (data.stream_details) {
+                        data = data.stream_details;
+                    }
+                } catch (e) {
+                    statusEl.innerText = "Error parsing JSON";
+                    statusEl.className = "status-error";
+                    return;
+                }
+
+                const channel = data.channel_id;
+                const token = data.agora_channel_token;
+                // Use a random UID for viewing if not provided, or use the one in JSON if it's meant for us (though usually that's the streamer's ID?)
+                // Actually, json has "agora_id": 28948. This might be the viewer's ID assigned by server.
+                const uid = data.agora_id || null; 
+
+                // Update debug fields
+                document.getElementById("manual-controls").style.display = "block";
+                document.getElementById("channel").value = channel || "N/A";
+                document.getElementById("token").value = token ? token.substring(0, 20) + "..." : "N/A";
+                document.getElementById("uid").value = uid;
+
+                if (!channel || !token) {
+                    throw new Error("Missing channel_id or agora_channel_token in JSON");
+                }
+
+                statusEl.innerText = "Connecting...";
+                statusEl.className = "";
+
+                // Leave previous channel if any
+                if (client.connectionState === 'CONNECTED') {
+                    await client.leave();
+                }
+
+                // Join
+                await client.join(appId, channel, token, uid);
+                statusEl.innerText = "Connected. Waiting for stream...";
+                statusEl.className = "status-connected";
+                document.getElementById("placeholder-text").style.display = "none";
+
+            } catch (error) {
+                console.error(error);
+                statusEl.innerText = "Error: " + error.message;
+                statusEl.className = "status-error";
+            }
+        }
+
+        client.on("user-published", async (user, mediaType) => {
+            await client.subscribe(user, mediaType);
+            console.log("subscribe success");
+
+            if (mediaType === "video") {
+                const playerContainer = document.getElementById("remote-player");
+                // Clear previous video if any
+                playerContainer.innerHTML = ''; 
+                user.videoTrack.play(playerContainer);
+            }
+
+            if (mediaType === "audio") {
+                user.audioTrack.play();
+            }
+        });
+
+        client.on("user-unpublished", (user) => {
+            console.log("user-unpublished", user);
+            // Optionally remove the player
+        });
+        
+        // Potential App ID from traces (adjust_attribution_data -> key not really, usually hex 32 chars)
+        // From user provided json logs or similar, sometimes 'adid' is the adjust id, not agora.
+        // But worth a shot if we have a candidate.
+        // In api/viewmodel.py: "adid": "466f7443143a3df42868339f73e53887"
+        // This looks exactly like an MD5 hash or a UUID without dashes, which fits Agora App ID format (32 hex chars).
+        // Let's try pre-filling it.
+    </script>
+</body>
+</html>

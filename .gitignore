@@ -1,22 +1,39 @@
 # Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-env/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
 venv/
-.venv/
+env/
 .env
+.venv/
+
+# IDEs
+.vscode/
+.idea/
 
 # Logs
 *.log
-superlive_bot/data/*.log
 
-# Data & Config
-superlive_bot/data/accounts.txt
-superlive_bot/data/gift_analytics.json
+# Project specific
+register_device_id.py # Optional, if it's a local utility
+verify_proxy.py
+test_*.py
 
-# IDE
-.vscode/
-.idea/
+# Android
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties

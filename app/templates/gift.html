@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Auto Gift</title>
+    <!-- Google Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* iOS Colors Light */
+            --ios-bg: #F2F2F7;
+            --ios-card: rgba(255, 255, 255, 0.75);
+            --ios-text: #000000;
+            --ios-text-secondary: #8E8E93;
+            --ios-blue: #007AFF;
+            --ios-red: #FF3B30;
+            --ios-green: #34C759;
+            --ios-separator: #C6C6C8;
+            --ios-pressed: #E5E5EA;
+            --glass-blur: blur(20px);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        body.dark-mode {
+            /* iOS Colors Dark */
+            --ios-bg: #000000;
+            --ios-card: rgba(28, 28, 30, 0.75);
+            --ios-text: #FFFFFF;
+            --ios-text-secondary: #8E8E93;
+            --ios-separator: #38383A;
+            --ios-pressed: #2C2C2E;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--ios-bg);
+            color: var(--ios-text);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.3s, color 0.3s;
+            overflow: hidden; /* Lock body scroll for desktop app feel */
+        }
+
+        /* Container for Desktop Layout */
+        .app-container {
+            display: flex;
+            width: 100%;
+            max-width: 1000px;
+            height: 90vh; /* Floating card effect */
+            max-height: 800px;
+            background: var(--ios-card);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            opacity: 0;
+            animation: fadeIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Left Panel */
+        .panel-left {
+            flex: 1;
+            padding: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-right: 1px solid var(--ios-separator);
+            position: relative;
+        }
+
+        /* Right Panel */
+        .panel-right {
+            flex: 1.4;
+            padding: 0;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.02); /* Slight contrast */
+            scroll-behavior: smooth;
+        }
+        
+        /* Mobile Layout Override */
+        @media (max-width: 768px) {
+            body {
+                display: block;
+                height: auto;
+                overflow: auto;
+                padding: 0;
+                background-color: var(--ios-bg); /* Reset bg for full screen mobile */
+            }
+            .app-container {
+                flex-direction: column;
+                height: auto;
+                max-height: none;
+                width: 100%;
+                border-radius: 0;
+                box-shadow: none;
+                background: transparent;
+                backdrop-filter: none;
+                animation: none;
+                opacity: 1;
+            }
+            .panel-left {
+                border-right: none;
+                padding: 2rem 1.5rem 0.5rem 1.5rem;
+                flex: 0;
+            }
+            .panel-right {
+                flex: 1;
+                padding-bottom: 4rem;
+                overflow: visible;
+                background: transparent;
+            }
+        }
+
+        h1 {
+            font-size: 34px;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, var(--ios-blue), #8E2DE2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        h2 {
+            font-size: 13px;
+            text-transform: uppercase;
+            color: var(--ios-text-secondary);
+            margin: 24px 20px 8px 20px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .subtitle {
+            color: var(--ios-text-secondary);
+            font-size: 17px;
+            line-height: 1.4;
+            margin-bottom: 2rem;
+        }
+
+        .ios-list {
+            background-color: var(--ios-card);
+            border-radius: 14px;
+            margin: 0 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            transition: transform 0.2s;
+        }
+        
+        .ios-list:hover {
+            transform: translateY(-1px);
+        }
+
+        .ios-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            min-height: 52px;
+            border-bottom: 0.5px solid var(--ios-separator);
+            transition: background-color 0.2s;
+        }
+        
+        /* Icon Styling */
+        .item-icon {
+            color: var(--ios-blue);
+            margin-right: 12px;
+            font-size: 22px;
+        }
+        .icon-red { color: var(--ios-red); }
+        .icon-green { color: var(--ios-green); }
+        .icon-purple { color: #AF52DE; }
+        .icon-orange { color: #FF9500; }
+
+        .ios-item:last-child {
+            border-bottom: none;
+        }
+
+        .ios-item label {
+            font-size: 17px;
+            flex-shrink: 0;
+            margin-right: 12px;
+            font-weight: 400;
+        }
+
+        .ios-input {
+            border: none;
+            background: transparent;
+            text-align: right;
+            font-size: 17px;
+            color: var(--ios-blue);
+            font-family: inherit;
+            flex-grow: 1;
+            outline: none;
+            min-width: 0;
+            transition: color 0.2s;
+        }
+        
+        .ios-input:focus {
+            color: #0051a8; /* Darker blue on focus */
+        }
+        .dark-mode .ios-input:focus {
+            color: #409cff;
+        }
+        
+        .dark-mode .ios-input {
+             color: var(--ios-blue);
+        }
+
+        textarea.ios-input {
+            text-align: left;
+            resize: vertical;
+            min-height: 80px;
+            margin-top: 8px;
+            text-align: left;
+            line-height: 1.4;
+        }
+        
+        .ios-item-col {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .ios-item-col label {
+             margin-bottom: 4px;
+             display: flex;
+             align-items: center;
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 51px;
+            height: 31px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #E9E9EA;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .dark-mode .slider {
+            background-color: #39393D;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 27px;
+            width: 27px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            border-radius: 50%;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+        }
+        input:checked + .slider {
+            background-color: var(--ios-green);
+        }
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        /* Buttons */
+        .actions-container {
+            margin-top: auto;
+        }
+
+        .btn-ios {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 16px;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 12px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-ios span {
+            margin-right: 8px;
+        }
+
+        .btn-ios:active {
+            transform: scale(0.96);
+        }
+        
+        .btn-primary {
+            background: var(--ios-blue);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+        }
+        .btn-primary:hover {
+            background: #006ce6;
+        }
+        
+        .btn-danger {
+            background: rgba(255, 59, 48, 0.1);
+            color: var(--ios-red);
+        }
+        .btn-danger:hover {
+            background: rgba(255, 59, 48, 0.2);
+        }
+
+        .icon-btn {
+            background: rgba(118, 118, 128, 0.12);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--ios-text);
+            transition: background 0.2s;
+        }
+        
+        .icon-btn:hover {
+            background: rgba(118, 118, 128, 0.2);
+        }
+        
+        .dark-mode .icon-btn {
+             background: rgba(118, 118, 128, 0.24);
+        }
+        .dark-mode .icon-btn:hover {
+             background: rgba(118, 118, 128, 0.35);
+        }
+
+        /* Status Toast */
+        #status {
+            padding: 14px;
+            border-radius: 14px;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            font-size: 15px;
+            text-align: center;
+            display: none;
+            background: var(--ios-card);
+            backdrop-filter: blur(10px);
+            color: var(--ios-text);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .success { color: var(--ios-green) !important; border-left: 4px solid var(--ios-green); }
+        .error { color: var(--ios-red) !important; border-left: 4px solid var(--ios-red); }
+
+    </style>
+</head>
+<body id="body">
+    <div class="app-container">
+        
+        <!-- Left Panel: Header & Actions -->
+        <div class="panel-left">
+            <div>
+                <div class="header-actions">
+                    <h1>Auto Gift</h1>
+                    <button class="icon-btn" onclick="toggleTheme()" title="Toggle Theme">
+                        <span class="material-icons-round" id="theme-icon">dark_mode</span>
+                    </button>
+                </div>
+                <p class="subtitle">Premium control panel for automated gift distribution workers.</p>
+                
+                <div id="status"></div>
+            </div>
+
+            <div class="actions-container">
+                <button class="btn-ios btn-primary" onclick="sendAction(10)">
+                    <span class="material-icons-round">play_arrow</span> Start Logic
+                </button>
+                <button class="btn-ios btn-danger" onclick="sendAction(12)">
+                    <span class="material-icons-round">stop</span> Stop Logic
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Panel: Form (Scrollable) -->
+        <div class="panel-right">
+            <h2>Target Configuration</h2>
+            <div class="ios-list">
+                <div class="ios-item">
+                    <span class="material-icons-round item-icon icon-purple">live_tv</span>
+                    <label for="livestream_id">Livestream ID</label>
+                    <input type="number" id="livestream_id" class="ios-input" value="127902815">
+                </div>
+                <div class="ios-item">
+                    <span class="material-icons-round item-icon icon-orange">person</span>
+                    <label for="name">Target Name</label>
+                    <input type="text" id="name" class="ios-input" placeholder="Optional">
+                </div>
+            </div>
+
+            <h2>Worker Settings</h2>
+            <div class="ios-list">
+                <div class="ios-item">
+                    <span class="material-icons-round item-icon icon-green">groups</span>
+                    <label for="worker">Worker Count</label>
+                    <input type="number" id="worker" class="ios-input" value="2" min="1">
+                </div>
+                <div class="ios-item">
+                    <span class="material-icons-round item-icon">layers</span>
+                    <label for="base">Base</label>
+                    <input type="number" id="base" class="ios-input" value="1">
+                </div>
+            </div>
+
+            <h2>Network & Privacy</h2>
+            <div class="ios-list">
+                <div class="ios-item">
+                    <span class="material-icons-round item-icon">public</span>
+                    <label>Use Proxy</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="use_proxy" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="ios-item">
+                    <span class="material-icons-round item-icon icon-red">vpn_lock</span>
+                    <label>Use VPN</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="use_vpn">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="ios-item ios-item-col">
+                    <label for="proxies">
+                        <span class="material-icons-round item-icon" style="font-size: 18px; margin-right: 8px;">dns</span> 
+                        Custom Proxies
+                    </label>
+                    <textarea id="proxies" class="ios-input" placeholder="protocol://user:pass@ip:port&#10;One per line"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme Logic
+        const body = document.getElementById('body');
+        const themeIcon = document.getElementById('theme-icon');
+        const savedTheme = localStorage.getItem('theme');
+
+        if (savedTheme === 'dark') {
+            body.classList.add('dark-mode');
+            themeIcon.textContent = 'light_mode';
+        } else {
+            themeIcon.textContent = 'dark_mode';
+        }
+
+        function toggleTheme() {
+            body.classList.toggle('dark-mode');
+            const isDark = body.classList.contains('dark-mode');
+            themeIcon.textContent = isDark ? 'light_mode' : 'dark_mode';
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        }
+
+        // Form Logic
+        async function sendAction(code) {
+            const statusEl = document.getElementById('status');
+            statusEl.style.display = 'block';
+            statusEl.textContent = 'Sending command...';
+            statusEl.className = '';
+            
+            // Subtle button animation feedback could go here
+
+            const payload = { code: code };
+
+            if (code === 10) {
+                payload.livestream_id = parseInt(document.getElementById('livestream_id').value);
+                payload.worker = parseInt(document.getElementById('worker').value);
+                payload.base = parseInt(document.getElementById('base').value);
+                payload.use_proxy = document.getElementById('use_proxy').checked;
+                payload.use_vpn = document.getElementById('use_vpn').checked;
+                
+                const name = document.getElementById('name').value;
+                if (name) payload.name = name;
+
+                const proxiesText = document.getElementById('proxies').value;
+                if (proxiesText.trim()) {
+                    payload.proxies = proxiesText.split('\n').filter(p => p.trim() !== '');
+                }
+            }
+
+            try {
+                const response = await fetch('/auto/gift', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    statusEl.textContent = data.message || 'Command successfully sent.';
+                    statusEl.classList.add('success');
+                } else {
+                    statusEl.textContent = data.error || 'Server returned an error.';
+                    statusEl.classList.add('error');
+                }
+            } catch (error) {
+                statusEl.textContent = 'Connection Error: ' + error.message;
+                statusEl.classList.add('error');
+            }
+        }
+    </script>
+</body>
+</html>
